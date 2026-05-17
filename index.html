@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intranet AOD - Sistema Central</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --border-color: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent-color: #58a6ff;
+            --alert-color: #f85149;
+            --success-color: #3fb950;
+            --warning-color: #d29922;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navegación */
+        .sidebar {
+            width: 250px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-area {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(88, 166, 255, 0.1);
+            border: 1px solid var(--accent-color);
+        }
+
+        /* Contenido Principal */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* Utilidades Generales */
+        .sys-message { color: var(--text-muted); font-style: italic; }
+        .alert-text { color: var(--alert-color); font-weight: bold; }
+        
+        /* ---------------- VISTA: PIZARRA GENERAL ---------------- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .dash-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+        }
+
+        .dash-panel h3 { margin-bottom: 15px; color: var(--accent-color); }
+
+        .status-indicator {
+            padding: 15px;
+            border: 1px solid var(--alert-color);
+            background-color: rgba(248, 81, 73, 0.1);
+            margin-bottom: 20px;
+        }
+
+        /* ---------------- VISTA: DIRECTORIO ---------------- */
+        .search-container { margin-bottom: 30px; display: flex; gap: 10px; }
+        .search-bar { flex-grow: 1; max-width: 500px; padding: 12px 15px; background-color: var(--panel-bg); border: 1px solid var(--border-color); color: var(--text-main); outline: none; }
+        .search-bar:focus { border-color: var(--accent-color); }
+        .btn-search { padding: 12px 25px; background-color: var(--accent-color); color: #000; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .results-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+        .profile-card { background-color: var(--panel-bg); border: 1px solid var(--border-color); padding: 20px; border-left: 4px solid var(--accent-color); }
+        .profile-header { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; margin-bottom: 15px; }
+        .profile-id { color: var(--accent-color); font-weight: bold; }
+        .profile-data { list-style: none; margin-bottom: 15px; }
+        .profile-data li { margin-bottom: 8px; font-size: 0.95rem; }
+        .data-label { color: var(--text-muted); display: inline-block; width: 120px; }
+        .profile-history { background-color: rgba(0,0,0,0.2); padding: 15px; border: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-muted); }
+
+        /* ---------------- VISTA: BANDEJA DE ENTRADA ---------------- */
+        .inbox-container { display: flex; gap: 20px; height: 600px; }
+        .email-list { width: 350px; background-color: var(--panel-bg); border: 1px solid var(--border-color); overflow-y: auto; }
+        .email-item { padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
+        .email-item:hover { background-color: rgba(88, 166, 255, 0.05); }
+        .email-item.unread { border-left: 3px solid var(--warning-color); }
+        .email-sender { font-weight: bold; color: var(--text-main); font-size: 0.9rem; }
+        .email-subject { color: var(--text-muted); font-size: 0.85rem; margin-top: 5px; }
+        
+        .email-viewer { flex-grow: 1; background-color: var(--panel-bg); border: 1px solid var(--border-color); padding: 25px; }
+        .viewer-header { border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .viewer-body { font-size: 0.95rem; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; }
+
+        /* ---------------- VISTA: ANOMALÍAS ---------------- */
+        .anomaly-card { background-color: var(--panel-bg); border: 1px solid var(--border-color); padding: 20px; margin-bottom: 20px; display: flex; gap: 20px;}
+        .anomaly-card.danger { border-left: 4px solid var(--alert-color); }
+        .anomaly-card.neutral { border-left: 4px solid var(--success-color); }
+        .anomaly-status { font-weight: bold; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 10px; display: inline-block; padding: 3px 8px; border-radius: 3px; }
+        .status-danger { background-color: rgba(248, 81, 73, 0.2); color: var(--alert-color); }
+        .status-neutral { background-color: rgba(63, 185, 80, 0.2); color: var(--success-color); }
+        .status-except { background-color: rgba(211, 162, 98, 0.2); color: var(--except-color); }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo-area">
+            FUNDACIÓN A.O.D.<br>
+            <span style="font-size: 0.7rem; color: var(--text-muted);">INTRANET - COMISIÓN C</span>
+        </div>
+        <button class="nav-item active" onclick="switchTab('dashboard', this)">Pizarra General</button>
+        <button class="nav-item" onclick="switchTab('directory', this)">Directorio de Personal</button>
+        <button class="nav-item" onclick="switchTab('inbox', this)">Bandeja de Entrada</button>
+        <button class="nav-item" onclick="switchTab('anomalies', this)">Registro de Anomalías</button>
+    </div>
+
+    <div class="main-content">
+
+        <div id="view-dashboard" class="view-section active">
+            <h1 class="header-title">Panel de Control Operativo</h1>
+            
+            <div class="status-indicator">
+                <h3 style="color: var(--alert-color);">NIVEL DE ALERTA: ELEVADO</h3>
+                <p>Se ha reportado una pérdida total del escuadrón de principiantes bajo el mando de la unidad 012-D en el Distrito Eden.</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dash-panel">
+                    <h3>Últimas Directivas</h3>
+                    <ul style="list-style: none; line-height: 1.8; color: var(--text-muted); font-size: 0.95rem;">
+                        <li>> <strong>[SISTEMA]</strong>: Simulacro militar activo en el hangar del campamento las prácticas de capacitación ubicado en el Campo de Maniobras Militares.</li>
+                        <li>> <strong>[TRASLADO]</strong>: Unidad Niani (089-N) transferida oficialmente desde Comisión B.</li>
+                        <li>> <strong>[LEGAL]</strong>: El gobierno de la provincia autorizó que la comisíón C realice las practicas de capacitación en el Campo de Maniobras Militares.</li>
+                        <li>> <strong>[LEGAL]</strong>: Restricción de información respecto al caso "Anakaret Antartet". Toda consulta debe derivarse al Coordinador Bertrand.</li>
+                    </ul>
+                </div>
+                <div class="dash-panel">
+                    <h3>Personal Desplegado</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">
+                        - Directora Sofyan (Campamento)<br>
+                        - Dir. Sector Desant (Campamento)<br>
+                        - Reclutas: 45 unidades en capacitación.<br>
+                        - Coordinadora Damaris Darina (Cede central de Dominik)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-directory" class="view-section">
+            <h1 class="header-title">Base de Datos de Unidades</h1>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Ingresar Nombre o ID Numérico...">
+                <button class="btn-search" onclick="executeSearch()">Buscar</button>
+            </div>
+
+            <div id="resultsArea" class="results-container">
+                <p class="sys-message">Esperando consulta de parámetros...</p>
+            </div>
+        </div>
+
+        <div id="view-inbox" class="view-section">
+            <h1 class="header-title">Comunicaciones Internas</h1>
+            
+            <div class="inbox-container">
+                <div class="email-list">
+                    <div class="email-item unread" onclick="showEmail(1)">
+                        <div class="email-sender">De: Dir. Sofyan</div>
+                        <div class="email-subject">REPORTE: Simulacro y Rendimiento</div>
+                    </div>
+                    <div class="email-item" onclick="showEmail(2)">
+                        <div class="email-subject">De: Coord. Bertrand</div>
+                        <div class="email-subject">Estrategia Legal: Asunto Anakaret</div>
+                    </div>
+                    <div class="email-item" onclick="showEmail(3)">
+                        <div class="email-subject">De: Integrante Lan</div>
+                        <div class="email-subject">CONFIRMACIÓN: Bajas en Distrito Eden</div>
+                    </div>
+                </div>
+                <div class="email-viewer">
+                    <div id="email-content" class="sys-message">Seleccione un mensaje para leer.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-anomalies" class="view-section">
+            <h1 class="header-title">Expedientes de Anomalías</h1>
+            
+            <!-- ESPERPENTO DE FAURAN-->
+            <div class="anomaly-card danger">
+                <div style="flex-grow: 1;">
+                    <div class="anomaly-status status-danger">ESTADO: CRÍTICO / ACTIVO</div>
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">Esperpento de Faurán</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                        <strong>Última Ubicación Conocida:</strong> Distrito de Faur (Registro: Hace 5 años).<br>
+                        <strong>Características:</strong> Anomalía de proporciones colosales. Registra la capacidad de absorber materia biológica (víctimas) en su estructura.<br>
+                        <strong>Nota Operativa:</strong> Datos biométricos utilizados para el reciente simulacro a puerta cerrada en el hangar de entrenamiento. Nivel de amenaza máximo.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- ESPIRITU DEL SONIDO-->
+            <div class="anomaly-card neutral">
+                <div style="flex-grow: 1;">
+                    <div class="anomaly-status status-neutral">ESTADO: NEUTRALIZADO</div>
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">Espíritu del Sonido</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                        <strong>Última Ubicación:</strong> Distrito Eden.<br>
+                        <strong>Características:</strong> Espíritu Somático. Morfología irregular (fauces de gran tamaño sobre extremidades). Extremadamente letal cuando abre su boca.<br>
+                        <strong>Reporte de Baja:</strong> Causó la aniquilación total del escuadrón novato de la unidad 012-D. Fue erradicado posteriormente por la recluta 102-I.<br>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ESPIRITU ELECTRICIDAD-->
+            <div class="anomaly-card neutral">
+                <div style="flex-grow: 1;">
+                    <div class="anomaly-status status-neutral">ESTADO: NEUTRALIZADO</div>
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">Espíritu de Redes</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                        <strong>Última Ubicación:</strong> Distrito Ilkai.<br>
+                        <strong>Características:</strong> Espíritu Refulgente. Morfología irregular (enorme ojo con varias extremidades). Se registró la capacidad de realizar cortes de energía y la manipulaciòn de dispositivos electronicos..<br>
+                        <strong>Reporte de Baja:</strong> La unica víctima reconocida fue un adolescente, del cual tomó su cuerpo físico. Fue erradicado posteriormente por la recluta 102-I.<br>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ESPIRITU BRUJULA-->
+            <div class="anomaly-card except">
+                <div style="flex-grow: 1;">
+                    <div class="anomaly-status status-except">ESTADO: ACTIVO (excepción)</div>
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">Espíritu Brújula</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                        <strong>Ubicación Actual:</strong> Cede Distrito Eden. Bajo control<br>
+                        <strong>Características:</strong> Espíritu Somático. Morfología irregular (se visualiza una boca y una antena fusionadas a una brújula). No tiene la capacidad de resultar una amenza<br>
+                        <strong>Reporte de Baja:</strong> Fue capturado e investigado luego de ser descubierto en una expedicion en el distrito Faur.<br>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ESPIRITU ARAÑA-->
+            <div class="anomaly-card neutral">
+                <div style="flex-grow: 1;">
+                    <div class="anomaly-status status-neutral">ESTADO: ACTIVO</div>
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">Espíritu Araña</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                        <strong>Última Ubicación:</strong> Distrito Saint Court.<br>
+                        <strong>Características:</strong> Espíritu Somático progenitor. Cuerpo arácnido de tamaño colosal. Cuenta con la capacidad de subdividirse. Amenaza de alto nivel si no se neutraliza en corto plazo.<br>
+                        <strong>Reporte de Baja:</strong> Causó disturbios en las oficinas del banco de Saint Court. Fueron reportadas diferentes copias de su cuerpo original.<br>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 1. Lógica de Navegación (Tabs) Corregida
+        function switchTab(tabId, element) {
+            // Quitar clase active de todos los botones
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            // Agregar clase active al botón clickeado utilizando el elemento directo
+            if(element) element.classList.add('active');
+
+            // Quitar clase active de todas las vistas
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            
+            // Mostrar la vista seleccionada
+            document.getElementById('view-' + tabId).classList.add('active');
+        }
+
+        // 2. Base de Datos del Directorio
+        const database = [
+            { id: "001-B", nombre: "Bertrand Ayala", edad: 22, comision: "C", designacion: "Coordinador / Sub-dirigente", estado: "ACTIVO", historial: "Ingreso inicial a la Comisión A (Élite) tras obtener el récord histórico de calificaciones. Transferencia oficial a la Comisión C procesada hace 24 meses." },
+            { id: "022-S", nombre: "Sofyan", edad: 22, comision: "C", designacion: "Directora de área", estado: "ACTIVO", historial: "Designada como segunda al mando de la sede secundaria del distrito Eden. Jefa de capacitaciones." },
+            { id: "015-V", nombre: "Van Duinen", edad: 22, comision: "C", designacion: "Director de área", estado: "ACTIVO", historial: "Director y organizador de la sede secundaria del distrito Eden. Encargado de las relaciones internas de la organización." },
+            { id: "0036-D", nombre: "Desant", edad: 22, comision: "C", designacion: "Coordinador / Sub-dirigente", estado: "ACTIVO", historial: "Asistente y coordinador de la escuela de capacitación de la sede secundaria del distrito Eden." },
+     
+            { id: "044-L", nombre: "Lan", edad: 21, comision: "C", designacion: "Integrante Coordinadora (Análisis / Médico)", estado: "ACTIVA", historial: "Ingreso reglamentario. Actualmente a cargo del monitoreo biométrico y gestión de datos tácticos de las unidades de campo." },
+            { id: "012-D", nombre: "Damaris Darina", edad: 16, comision: "C", designacion: "Integrante Coordinadora / Líder de Escuadrón", estado: "ACTIVA", historial: "Ingreso temprano por aptitudes tácticas. Antiespíritu destacada. Única sobreviviente registrada del despliegue en el Distrito Eden contra la amenaza catalogada como Espíritu del Sonido." },
+            { id: "089-N", nombre: "Niobi Niani", edad: 13, comision: "C", designacion: "Recluta Especial (Rastreo / Cibernética)", estado: "ACTIVA", historial: "Ingreso excepcional a los 12 años en el sector informático. Recientemente transferida desde la Comisión B. Rastreadora de alto nivel. Pendiente de evaluación física." },
+            { id: "102-I", nombre: "Inna", edad: 15, comision: "C", designacion: "Recluta (En formación)", estado: "ACTIVA", historial: "Ingreso reglamentario. Sobreviviente del incidente del Distrito de Faur. Actualmente bajo observación directa por orden de la dirección operativa." },
+            { id: "104-K", nombre: "Aly Keita", edad: 15, comision: "C", designacion: "Recluta (En formación)", estado: "ACTIVA", historial: "Ingreso reglamentario. Transferida a la organización tras resultados del sorteo de inscripción no obligatorio." },
+            { id: "105-P", nombre: "Priske Fligot", edad: 15, comision: "C", designacion: "Recluta (En formación)", estado: "ACTIVA", historial: "Ingreso reglamentario. Transferida a la organización tras resultados del sorteo de inscripción no obligatorio." },
+
+            { id: "104-K", nombre: "Érica Sugita", edad: 15, comision: "C", designacion: "Recluta (En formación)", estado: "ACTIVA", historial: "Ingreso incompleto. Transferida por recomendación."},
+            
+            { id: "104-K", nombre: "Jasir Asani", edad: 15, comision: "C", designacion: "Recluta (En formación)", estado: "ACTIVA", historial: "Ingreso reglamentario. Transferida a la organización tras resultados del sorteo de inscripción no obligatorio." },
+            { id: "104-K", nombre: "Elías Colyn", edad: 15, comision: "C", designacion: "Recluta (En formación)", estado: "ACTIVA", historial: "Ingreso reglamentario. Transferida a la organización tras resultados del sorteo de inscripción no obligatorio." }
+           
+            
+        ];
+
+        function executeSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const resultsArea = document.getElementById('resultsArea');
+            resultsArea.innerHTML = '';
+
+            if (query === '') {
+                resultsArea.innerHTML = '<p class="sys-message">Por favor, ingrese un término de búsqueda válido.</p>';
+                return;
+            }
+
+            const results = database.filter(agente => agente.nombre.toLowerCase().includes(query) || agente.id.toLowerCase().includes(query));
+
+            if (results.length === 0) {
+                resultsArea.innerHTML = '<p class="alert-text">EXPEDIENTE NO ENCONTRADO. Verifique los datos ingresados.</p>';
+                return;
+            }
+
+            results.forEach(agente => {
+                resultsArea.innerHTML += `
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <span class="profile-id">[ ID: ${agente.id} ]</span>
+                            <span style="color: var(--success-color); font-size: 0.85rem;">ESTADO: ${agente.estado}</span>
+                        </div>
+                        <ul class="profile-data">
+                            <li><span class="data-label">Identidad:</span> ${agente.nombre}</li>
+                            <li><span class="data-label">Edad:</span> ${agente.edad} años</li>
+                            <li><span class="data-label">Comisión:</span> ${agente.comision}</li>
+                            <li><span class="data-label">Designación:</span> ${agente.designacion}</li>
+                        </ul>
+                        <div class="profile-history"><strong>Registro Histórico:</strong><br>${agente.historial}</div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') executeSearch(); });
+
+        // 3. Lógica de Bandeja de Entrada (Correos)
+        const emails = {
+            1: {
+                from: "Directora Sofyan",
+                to: "Director Soith",
+                subject: "REPORTE: Simulacro y Rendimiento",
+                body: "Soith,\n\nProcedo a informar la evaluación actual del campamento. El nivel físico general de los novatos es deficiente. La unidad Niani (089-N) ha registrado resultados críticos en la pista de obstáculos. De continuar con esta negativa a la adaptación física, solicitaré formalmente su expulsión de la institución.\n\nPor otro lado, la unidad 102-I (Inna) ha demostrado progreso aerodinámico tras pruebas con el equipo de vuelo.\n\nEl simulacro final en el hangar procederá según lo acordado. Sabemos lo que buscamos con esto.\n\n- Sofyan."
+            },
+            2: {
+                from: "Coordinador Bertrand",
+                to: "Director Soith",
+                subject: "Estrategia Legal: Asunto Anakaret",
+                body: "Director,\n\nTras el último altercado y la revelación del secreto, me niego rotundamente a solicitar asistencia al Director General o a mi antiguo contacto en la Élite (Adamu).\n\nPara retener a la recluta Inna en nuestra comisión y frenar el avance de Anakaret Antartet, ejecutaremos el protocolo de registro formal. Asumiré la responsabilidad legal total del despliegue en la ciudad. Humillar a la Comisión C ante la junta directiva es la única vía lógica para asegurar nuestro activo sin levantar sospechas.\n\nProceda con los trámites burocráticos. Yo me encargo del resto.\n\n- Bertrand."
+            },
+            3: {
+                from: "Integrante Lan",
+                to: "Coordinador Bertrand",
+                subject: "CONFIRMACIÓN: Bajas en Distrito Eden",
+                body: "Bertrand.\n\nHe finalizado el escaneo biométrico del sector 4 en el Distrito Eden. Se confirma la pérdida de signos vitales de los tres reclutas asignados al escuadrón de Darina. Sus cuerpos permanecen en el área; no fueron absorbidos por la anomalía.\n\nReitero mi preocupación expuesta anteriormente. Si los espíritus no están consumiendo a los objetivos, el patrón indica exterminio sistemático. Sugiero elevar esta hipótesis, considerando tus conocimientos pasados en la Comisión A.\n\n- Lan."
+            }
+        };
+
+        function showEmail(id) {
+            const container = document.getElementById('email-content');
+            const data = emails[id];
+            
+            container.innerHTML = `
+                <div class="viewer-header">
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">${data.subject}</h2>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">De: <strong>${data.from}</strong> | Para: ${data.to}</span>
+                </div>
+                <div class="viewer-body">${data.body}</div>
+            `;
+        }
+    </script>
+</body>
+</html>
