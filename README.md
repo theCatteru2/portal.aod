@@ -1,6 +1,9 @@
 # 🌐 Intranet AOD - Sistema Central (Comisión C)
 
-Una Single Page Application (SPA) interactiva que simula la base de datos y el portal web interno de la **Fundación A.O.D. (Comisión C)[cite_start]**, perteneciente al universo del manga *"En Orden de Dianthus"*. 
+Una Single Page Application (SPA) interactiva que simula la base de datos y el portal web interno de la **Fundación A.O.D. (Comisión C)[cite_start]**, perteneciente al universo del manga *"En Orden de Dianthus"*.
+
+Basado en la obra original de Joirent "En Orden de Dianthus":
+https://mangaplus-creators.jp/titles/iz2307020305433290024427833/
 
 Este proyecto web está diseñado con una estética burocrática, militar y de sistema cerrado, simulando la herramienta que directores y coordinadores utilizan en su día a día para gestionar reclutas, monitorear misiones y leer reportes clasificados.
 
